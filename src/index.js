@@ -1,5 +1,6 @@
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import { GalleryApiService } from './galleryApiService';
+import {LoadMoreBtn} from './LoadMoreBtn'
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 
@@ -7,30 +8,49 @@ const form = document.getElementById('search-form');
 const gallery = document.querySelector('.gallery');
 
 const galleryApiService = new GalleryApiService();
+const loadMoreBtn = new LoadMoreBtn({
+  selector: '.load-more',
+  isHidden: true,
+});
 
 form.addEventListener('submit', onSubmit);
+loadMoreBtn.button.addEventListener('click', addNewPhotos)
 
 function onSubmit(eve) {
   eve.preventDefault();
   const value = eve.currentTarget.elements.searchQuery.value.trim();
 
   galleryApiService.searchValue = value;
-  if (value.length === 0) return;
-
-  return galleryApiService
-    .getPhotos()
-    .then(photos => {
-      if (photos.hits.length === 0) throw new Error('No data');
-      console.log(photos);
-      markup = photos.hits.map(createGallery).join('');
-      updateGallery(markup);
-      initLightbox();
-    })
-    .catch(onError);
+ 
+  galleryApiService.resetPage();
+  clearGallery();
+  addNewPhotos();
 }
+
+async function addNewPhotos(eve) {
+  loadMoreBtn.hide()
+  galleryApiService.nextPage()
+   try {
+    const photos = await galleryApiService
+      .getPhotos();
+    if (photos.hits.length === 0)
+       throw new Error('No data');
+    console.log(photos);
+     markup = photos.hits.map(createGallery).join('');
+    updateGallery(markup);
+     initLightbox();
+     loadMoreBtn.show();
+  } catch (err) {
+    return onError(err);
+  }
+} 
 
 function updateGallery(markup) {
   gallery.insertAdjacentHTML('beforeend', markup);
+}
+
+function clearGallery() {
+  gallery.innerHTML = "";
 }
 
 function createGallery({
@@ -75,6 +95,7 @@ function initLightbox() {
     captionsData: 'alt',
     captionDelay: 250,
   });
+  lightbox.refresh();
 }
 
 function onError(err) {
@@ -82,4 +103,5 @@ function onError(err) {
   Notify.failure(
     'Sorry, there are no images matching your search query. Please try again.'
   );
+  loadMoreBtn.hide()
 }

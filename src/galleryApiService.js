@@ -18,10 +18,23 @@ class GalleryApiService {
           image_type: 'photo',
           orientation: 'horizontal',
           safesearch: 'true',
+          page: this.page,
+          per_page: 40,
         },
       })
 
-      .then(response => response.data);
+      .then(response => response.data)
+      // .then((data)=> {
+      //   this.nextPage();
+      //   return data;
+      // })
+  }
+
+  nextPage() {
+    this.page += 1;
+  }
+  resetPage() {
+    this.page = 1;
   }
 }
 
