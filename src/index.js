@@ -35,7 +35,7 @@ async function addNewPhotos() {
     if (photos.hits.length === 0) throw new Error('No data');
     if (gallery.childNodes.length < 1)
       Notify.success(`Hooray! We found ${photos.totalHits} images.`);
-    markup = photos.hits.map(createGallery).join('');
+    const markup = photos.hits.map(createGallery).join('');
     updateGallery(markup);
     initLightbox();
     loadMoreBtn.show();
