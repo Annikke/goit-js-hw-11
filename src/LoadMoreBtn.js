@@ -7,14 +7,12 @@ class LoadMoreBtn {
   getButton(selector) {
     return document.querySelector(selector);
   }
-
   hide() {
     this.button.classList.add('hidden');
   }
-
   show() {
     this.button.classList.remove('hidden');
-    }
+  }
 }
 
 export { LoadMoreBtn };

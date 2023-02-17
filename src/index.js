@@ -1,6 +1,6 @@
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import { GalleryApiService } from './galleryApiService';
-import {LoadMoreBtn} from './LoadMoreBtn'
+import { LoadMoreBtn } from './LoadMoreBtn';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 
@@ -13,44 +13,50 @@ const loadMoreBtn = new LoadMoreBtn({
   isHidden: true,
 });
 
+let totalPhotos = 0;
+
 form.addEventListener('submit', onSubmit);
-loadMoreBtn.button.addEventListener('click', addNewPhotos)
+loadMoreBtn.button.addEventListener('click', addNewPhotos);
 
 function onSubmit(eve) {
   eve.preventDefault();
   const value = eve.currentTarget.elements.searchQuery.value.trim();
-
   galleryApiService.searchValue = value;
- 
   galleryApiService.resetPage();
   clearGallery();
+  totalPhotos = 0;
   addNewPhotos();
 }
 
-async function addNewPhotos(eve) {
-  loadMoreBtn.hide()
-  galleryApiService.nextPage()
-   try {
-    const photos = await galleryApiService
-      .getPhotos();
-    if (photos.hits.length === 0)
-       throw new Error('No data');
-    console.log(photos);
-     markup = photos.hits.map(createGallery).join('');
+async function addNewPhotos() {
+  loadMoreBtn.hide();
+  try {
+    const photos = await galleryApiService.getPhotos();
+    if (photos.hits.length === 0) throw new Error('No data');
+    if (gallery.childNodes.length < 1)
+      Notify.success(`Hooray! We found ${photos.totalHits} images.`);
+    markup = photos.hits.map(createGallery).join('');
     updateGallery(markup);
-     initLightbox();
-     loadMoreBtn.show();
+    initLightbox();
+    loadMoreBtn.show();
+    totalPhotos += photos.hits.length;
+    if (totalPhotos >= photos.totalHits || totalPhotos === 0) {
+      loadMoreBtn.hide();
+      Notify.info("We're sorry, but you've reached the end of search results.");
+    }
+    console.log(photos);
+    console.log(totalPhotos);
   } catch (err) {
     return onError(err);
   }
-} 
+}
 
 function updateGallery(markup) {
   gallery.insertAdjacentHTML('beforeend', markup);
 }
 
 function clearGallery() {
-  gallery.innerHTML = "";
+  gallery.innerHTML = '';
 }
 
 function createGallery({
@@ -87,7 +93,6 @@ function createGallery({
   </div>
 </div>
     `;
-  
 }
 
 function initLightbox() {
@@ -103,5 +108,5 @@ function onError(err) {
   Notify.failure(
     'Sorry, there are no images matching your search query. Please try again.'
   );
-  loadMoreBtn.hide()
+  loadMoreBtn.hide();
 }
